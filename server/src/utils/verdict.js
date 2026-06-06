@@ -61,6 +61,26 @@ function parseStructuredOutput(value) {
   }
 }
 
+function parseStructuredCandidate(value) {
+  const raw = normalizeOutput(value);
+  const parsed = parseStructuredOutput(raw);
+  if (parsed !== null) return parsed;
+
+  const lines = raw
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  for (let i = lines.length - 1; i >= 0; i -= 1) {
+    const line = lines[i];
+    if (!/^[\[{(]/.test(line)) continue;
+    const lineParsed = parseStructuredOutput(line);
+    if (lineParsed !== null) return lineParsed;
+  }
+
+  return null;
+}
+
 function flattenStructured(value) {
   if (Array.isArray(value)) {
     return value.flatMap((item) => flattenStructured(item));
@@ -68,9 +88,20 @@ function flattenStructured(value) {
   return [value == null ? 'null' : String(value)];
 }
 
+function isFlatArray(value) {
+  return Array.isArray(value) && value.every((item) => !Array.isArray(item));
+}
+
+function canonicalFlatArray(value) {
+  return value
+    .map((item) => (item == null ? 'null' : String(item)))
+    .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
+    .join(' ');
+}
+
 function canonicalize(value) {
   const raw = normalizeOutput(value);
-  const structured = parseStructuredOutput(raw);
+  const structured = parseStructuredCandidate(raw);
   if (structured !== null) {
     return flattenStructured(structured).join(' ');
   }
@@ -87,5 +118,12 @@ function canonicalize(value) {
 }
 
 export function outputsMatch(actual, expected) {
+  const actualStructured = parseStructuredCandidate(actual);
+  const expectedStructured = parseStructuredCandidate(expected);
+
+  if (isFlatArray(actualStructured) && isFlatArray(expectedStructured)) {
+    return canonicalFlatArray(actualStructured) === canonicalFlatArray(expectedStructured);
+  }
+
   return canonicalize(actual) === canonicalize(expected);
 }
