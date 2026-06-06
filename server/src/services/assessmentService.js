@@ -6,7 +6,7 @@ import { AppError } from '../middleware/errorHandler.js';
 import { getQuestionWithAllTestCases } from './questionService.js';
 import { executeCode, runTestCases } from './judge0Service.js';
 import { isValidLanguage } from '../utils/languageMap.js';
-import { VERDICTS, normalizeOutput } from '../utils/verdict.js';
+import { VERDICTS, normalizeOutput, outputsMatch } from '../utils/verdict.js';
 import { wrapUserCode } from '../utils/codeRunner.js';
 
 const MODE_DURATIONS_SECONDS = {
@@ -100,7 +100,8 @@ export async function runCode({ sessionId, sourceCode, language }) {
     const actual = normalizeOutput(execution.stdout);
     const expected = normalizeOutput(testCase.expectedOutput);
     const passed =
-      execution.verdict === VERDICTS.ACCEPTED && actual === expected;
+      execution.verdict === VERDICTS.ACCEPTED &&
+      outputsMatch(execution.stdout, testCase.expectedOutput);
 
     results.push({
       testCaseIndex: i,

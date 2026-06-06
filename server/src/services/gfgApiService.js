@@ -227,8 +227,8 @@ function buildQuestionFromGfgProblem(problem) {
   const testCases = examples.map((ex, idx) => ({
     input: ex.input,
     expectedOutput: ex.output,
-    isSample: idx < Math.min(2, examples.length),
-    isHidden: idx >= Math.min(2, examples.length),
+    isSample: true,
+    isHidden: false,
   }));
 
   return {

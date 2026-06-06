@@ -208,9 +208,11 @@ export default function ResultsPage() {
       {failed.length > 0 && (
         <div className="rounded-2xl border border-stone-800 bg-stone-900/30 p-6">
           <h2 className="text-lg font-semibold text-stone-100">Failure Details</h2>
-          <p className="mt-1 text-sm text-stone-400">
-            Hidden testcases do not show inputs/outputs.
-          </p>
+          {hiddenFailed.length > 0 && (
+            <p className="mt-1 text-sm text-stone-400">
+              Hidden testcases do not show inputs/outputs.
+            </p>
+          )}
 
           <div className="mt-5 space-y-4">
             {visibleFailed.length === 0 ? (

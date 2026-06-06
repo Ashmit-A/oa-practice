@@ -624,23 +624,15 @@ export default function AssessmentPage() {
                           Test {result.testCaseIndex + 1}: {result.passed ? 'Passed' : 'Failed'} (
                           {result.verdict})
                         </p>
-                        {result.input && (
-                          <p className="mt-1 text-xs text-stone-300">
-                            Input: <code>{result.input}</code>
-                          </p>
-                        )}
-                        {result.expectedOutput && (
-                          <p className="mt-1 text-xs text-stone-300">
-                            Expected: <code>{result.expectedOutput}</code>
-                          </p>
-                        )}
-                        {result.actualOutput !== undefined && (
-                          <p className="mt-1 text-xs text-stone-300">
-                            Got: <code>{result.actualOutput}</code>
-                          </p>
-                        )}
+                        <div className="mt-3 grid gap-3 md:grid-cols-3">
+                          <ResultBlock label="Input" value={result.input} />
+                          <ResultBlock label="Expected" value={result.expectedOutput} />
+                          <ResultBlock label="Got" value={result.actualOutput} />
+                        </div>
                         {result.stderr && (
-                          <p className="mt-2 text-xs text-rose-200">{result.stderr}</p>
+                          <pre className="mt-3 max-h-48 overflow-auto whitespace-pre-wrap rounded-lg border border-rose-500/25 bg-rose-950/30 p-3 text-xs text-rose-100">
+                            {result.stderr}
+                          </pre>
                         )}
                       </div>
                     ))}
@@ -672,6 +664,19 @@ export default function AssessmentPage() {
         message={modal.message}
         onClose={() => setModal({ open: false, title: '', message: '' })}
       />
+    </div>
+  );
+}
+
+function ResultBlock({ label, value }) {
+  return (
+    <div>
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-stone-500">
+        {label}
+      </p>
+      <pre className="mt-1 min-h-10 overflow-auto whitespace-pre-wrap rounded-lg bg-black/30 p-2 text-xs text-stone-200">
+        {value ?? ''}
+      </pre>
     </div>
   );
 }

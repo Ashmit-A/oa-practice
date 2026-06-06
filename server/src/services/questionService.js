@@ -18,7 +18,8 @@ function isGfgId(id) {
 function externalDocToQuestion(doc) {
   const normalizedTestCases = (doc.testCases || []).map((tc) => ({
     ...tc,
-    isHidden: tc.isSample ? false : true,
+    isSample: doc.source === 'gfg' ? true : Boolean(tc.isSample),
+    isHidden: doc.source === 'gfg' ? false : Boolean(tc.isHidden),
   }));
 
   return {
@@ -46,7 +47,7 @@ function externalDocToQuestion(doc) {
 async function upsertExternalQuestion(question) {
   const normalizedTestCases = (question.testCases || []).map((tc) => ({
     ...tc,
-    isHidden: tc.isSample ? false : true,
+    isHidden: Boolean(tc.isHidden),
   }));
 
   const payload = {
