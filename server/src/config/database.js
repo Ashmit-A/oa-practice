@@ -1,14 +1,18 @@
-import mongoose from 'mongoose';
-import env from './env.js';
+import dns from 'node:dns';
+
+dns.setServers([
+  '8.8.8.8',
+  '8.8.4.4',
+]);
+
+import mongoose from "mongoose";
 
 export async function connectDatabase() {
   try {
-    await mongoose.connect(env.mongodbUri, {
-      serverSelectionTimeoutMS: 5000,
-    });
-    console.log('MongoDB connected');
+    // console.log(process.env.MONGODB_URI?.replace(/\/\/.*@/, "//***:***@"));
+    await mongoose.connect(process.env.MONGODB_URI);
+    console.log("MongoDB connected");
   } catch (error) {
-    console.error('MongoDB connection error:', error.message);
-    process.exit(1);
+    console.error("MongoDB connection error:", error);
   }
 }

@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
 
 dotenv.config();
-
+// console.log("URI exists:", !!process.env.MONGODB_URI);
 const judge0Url = (process.env.JUDGE0_API_URL || 'https://ce.judge0.com').replace(/\/$/, '');
 
 const env = {
