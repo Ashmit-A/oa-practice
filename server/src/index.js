@@ -1,7 +1,5 @@
 import express from 'express';
 import cors from 'cors';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import env from './config/env.js';
 import { connectDatabase } from './config/database.js';
 import apiRoutes from './routes/apiRoutes.js';
@@ -26,17 +24,13 @@ app.get('/health', (_req, res) => {
 
 app.use('/api', apiRoutes);
 
-if (env.nodeEnv === 'production') {
-  const __filename = fileURLToPath(import.meta.url);
-  const __dirname = path.dirname(__filename);
-  const clientDist = path.resolve(__dirname, '../../client/dist');
-
-  app.use(express.static(clientDist));
-  app.get('*', (req, res, next) => {
-    if (req.path.startsWith('/api')) return next();
-    res.sendFile(path.join(clientDist, 'index.html'));
+app.get('/', (_req, res) => {
+  res.json({
+    success: true,
+    service: 'oa-practice-api',
+    status: 'running'
   });
-}
+});
 
 app.use(notFound);
 app.use(errorHandler);
