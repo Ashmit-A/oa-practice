@@ -10,9 +10,22 @@ import logger from './utils/logger.js';
 const app = express();
 
 app.use(requestLogger);
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://oa-practice-peach.vercel.app'
+];
+
 app.use(
   cors({
-    origin: env.nodeEnv === 'production' ? true : env.clientUrl,
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error('Not allowed by CORS'));
+    },
     credentials: true,
   })
 );
