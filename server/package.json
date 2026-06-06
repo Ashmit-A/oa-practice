@@ -1,0 +1,20 @@
+{
+  "name": "oa-practice-server",
+  "version": "1.0.0",
+  "description": "OA Practice Simulator backend API",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch src/index.js",
+    "start": "node src/index.js",
+    "seed": "node src/seed/seed.js"
+  },
+  "dependencies": {
+    "axios": "^1.7.9",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "mongoose": "^8.9.3",
+    "uuid": "^11.0.3"
+  }
+}

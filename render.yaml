@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: oa-practice-api
+    runtime: node
+    plan: free
+    buildCommand: cd server && npm install
+    startCommand: cd server && npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        sync: false
+      - key: CLIENT_URL
+        sync: false
+      - key: LEETCODE_API_URL
+        value: https://alfa-leetcode-api.onrender.com
+      - key: JUDGE0_API_URL
+        value: https://ce.judge0.com
+      - key: JUDGE0_USE_WAIT
+        value: "true"
+      - key: JUDGE0_API_KEY
+        sync: false
+      - key: JUDGE0_POLL_INTERVAL_MS
+        value: "1000"
+      - key: JUDGE0_MAX_POLL_ATTEMPTS
+        value: "30"
+      - key: PORT
+        value: "10000"
