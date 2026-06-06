@@ -6,6 +6,7 @@ import {
   fetchRandomQuestion,
 } from './leetcodeApiService.js';
 import {
+  cleanGfgExpectedOutput,
   fetchDailyGfgQuestion,
   fetchGfgQuestionById,
   fetchRandomGfgQuestion,
@@ -18,6 +19,8 @@ function isGfgId(id) {
 function externalDocToQuestion(doc) {
   const normalizedTestCases = (doc.testCases || []).map((tc) => ({
     ...tc,
+    expectedOutput:
+      doc.source === 'gfg' ? cleanGfgExpectedOutput(tc.expectedOutput) : tc.expectedOutput,
     isSample: doc.source === 'gfg' ? true : Boolean(tc.isSample),
     isHidden: doc.source === 'gfg' ? false : Boolean(tc.isHidden),
   }));

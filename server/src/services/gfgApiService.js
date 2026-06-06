@@ -71,6 +71,12 @@ function simplifyExampleValue(value) {
   return decodeHtmlEntities(unwrapped).trim();
 }
 
+export function cleanGfgExpectedOutput(output) {
+  return simplifyExampleValue(output)
+    .replace(/\s*(?:Explanation|Your Task|Expected Time Complexity|Expected Auxiliary Space)\s*:.*$/is, '')
+    .trim();
+}
+
 function simplifyExampleInput(inputText) {
   const raw = decodeHtmlEntities(String(inputText || '')).trim();
   if (!raw) return '';
@@ -104,11 +110,13 @@ function parseExamples(problemQuestionHtml) {
   const examples = [];
   for (const block of preBlocks) {
     const inputMatch = block.match(/Input:\s*([\s\S]*?)\s*Output:/i);
-    const outputMatch = block.match(/Output:\s*([\s\S]*)/i);
+    const outputMatch = block.match(
+      /Output:\s*([\s\S]*?)(?:\n\s*(?:Explanation|Your Task|Expected Time Complexity|Expected Auxiliary Space)\s*:|$)/i
+    );
     if (!inputMatch || !outputMatch) continue;
 
     const input = simplifyExampleInput(inputMatch[1]);
-    const output = simplifyExampleValue(outputMatch[1]);
+    const output = cleanGfgExpectedOutput(outputMatch[1]);
     if (!input || output === '') continue;
     examples.push({ input, output, explanation: '' });
   }
