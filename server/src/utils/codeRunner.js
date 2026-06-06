@@ -43,6 +43,12 @@ function formatPythonOutput(retType) {
   if (retType.includes('string[]')) {
     return 'print(json.dumps(result, separators=(",", ":")))';
   }
+  if (retType.includes('TreeNode')) {
+    return 'print(json.dumps(tree_to_list(result), separators=(",", ":")))';
+  }
+  if (retType.includes('ListNode')) {
+    return 'print(json.dumps(listnode_to_list(result), separators=(",", ":")))';
+  }
   if (retType === 'boolean') {
     return 'print("true" if result else "false")';
   }
@@ -67,10 +73,89 @@ function buildPythonRunner(userCode, metaData) {
 import sys
 from typing import *
 
+class ListNode:
+    def __init__(self, val=0, next=None):
+        self.val = val
+        self.next = next
+
+class TreeNode:
+    def __init__(self, val=0, left=None, right=None):
+        self.val = val
+        self.left = left
+        self.right = right
+
+def _loads_value(raw):
+    text = str(raw).strip()
+    if text in ("", "null", "None", "N"):
+        return None
+    text = text.replace("None", "null")
+    if text.startswith("[") or text.startswith("{") or text.startswith('"'):
+        return json.loads(text)
+    try:
+        return json.loads(text)
+    except Exception:
+        return text
+
+def build_listnode(values):
+    dummy = ListNode()
+    cur = dummy
+    for value in values or []:
+        cur.next = ListNode(value)
+        cur = cur.next
+    return dummy.next
+
+def listnode_to_list(head):
+    out = []
+    seen = 0
+    while head is not None and seen < 10000:
+        out.append(head.val)
+        head = head.next
+        seen += 1
+    return out
+
+def build_tree(values):
+    if values is None:
+        return None
+    normalized = [None if v in (None, "null", "None", "N") else v for v in values]
+    if not normalized or normalized[0] is None:
+        return None
+    root = TreeNode(normalized[0])
+    queue = [root]
+    index = 1
+    while queue and index < len(normalized):
+        node = queue.pop(0)
+        if index < len(normalized) and normalized[index] is not None:
+            node.left = TreeNode(normalized[index])
+            queue.append(node.left)
+        index += 1
+        if index < len(normalized) and normalized[index] is not None:
+            node.right = TreeNode(normalized[index])
+            queue.append(node.right)
+        index += 1
+    return root
+
+def tree_to_list(root):
+    if root is None:
+        return []
+    out = []
+    queue = [root]
+    while queue:
+        node = queue.pop(0)
+        if node is None:
+            out.append(None)
+            continue
+        out.append(node.val)
+        queue.append(node.left)
+        queue.append(node.right)
+    while out and out[-1] is None:
+        out.pop()
+    return out
+
 ${userCode}
 
 if __name__ == "__main__":
-    lines = [line for line in sys.stdin.read().split('\\n') if line.strip()]
+    lines = [line.strip() for line in sys.stdin.read().splitlines()]
+    lines = [line for line in lines if line != ""]
 ${parseLines}
     sol = Solution()
     result = sol.${method}(${callArgs})
@@ -79,10 +164,12 @@ ${parseLines}
 }
 
 function pythonParseExpr(type, lineExpr) {
-  if (type.includes('[]')) return `json.loads(${lineExpr}.strip())`;
+  if (type.includes('TreeNode')) return `build_tree(_loads_value(${lineExpr}))`;
+  if (type.includes('ListNode')) return `build_listnode(_loads_value(${lineExpr}))`;
+  if (type.includes('[]')) return `_loads_value(${lineExpr})`;
   if (type === 'integer' || type === 'int' || type === 'long') return `int(${lineExpr}.strip())`;
   if (type === 'boolean') return `(${lineExpr}.strip() == 'true')`;
-  if (type === 'string') return `json.loads(${lineExpr}.strip()) if ${lineExpr}.strip().startswith('"') else ${lineExpr}.strip()`;
+  if (type === 'string') return `_loads_value(${lineExpr})`;
   return `${lineExpr}.strip()`;
 }
 

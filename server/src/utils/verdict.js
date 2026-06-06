@@ -44,6 +44,36 @@ export function normalizeOutput(output) {
   return String(output).trim().replace(/\r\n/g, '\n');
 }
 
+function parseStructuredOutput(value) {
+  const raw = normalizeOutput(value);
+  if (!raw) return raw;
+
+  const normalized = raw.replace(/\bN\b/g, 'null').replace(/\bNone\b/g, 'null');
+  try {
+    return JSON.parse(normalized);
+  } catch {
+    return null;
+  }
+}
+
+function canonicalize(value) {
+  const raw = normalizeOutput(value);
+  const structured = parseStructuredOutput(raw);
+  if (structured !== null) {
+    return JSON.stringify(structured);
+  }
+
+  const lower = raw.toLowerCase();
+  if (lower === 'true' || lower === 'false') return lower;
+  if (/^-?\d+(\.\d+)?$/.test(raw)) return String(Number(raw));
+
+  return raw
+    .split(/\s+/)
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .join(' ');
+}
+
 export function outputsMatch(actual, expected) {
-  return normalizeOutput(actual) === normalizeOutput(expected);
+  return canonicalize(actual) === canonicalize(expected);
 }
