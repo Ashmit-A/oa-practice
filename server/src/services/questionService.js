@@ -6,6 +6,7 @@ import {
   fetchRandomQuestion,
 } from './leetcodeApiService.js';
 import {
+  cleanGfgExampleInput,
   cleanGfgExpectedOutput,
   fetchDailyGfgQuestion,
   fetchGfgQuestionById,
@@ -19,6 +20,7 @@ function isGfgId(id) {
 function externalDocToQuestion(doc) {
   const normalizedTestCases = (doc.testCases || []).map((tc) => ({
     ...tc,
+    input: doc.source === 'gfg' ? cleanGfgExampleInput(tc.input) : tc.input,
     expectedOutput:
       doc.source === 'gfg' ? cleanGfgExpectedOutput(tc.expectedOutput) : tc.expectedOutput,
     isSample: doc.source === 'gfg' ? true : Boolean(tc.isSample),
@@ -31,7 +33,14 @@ function externalDocToQuestion(doc) {
     title: doc.title,
     description: doc.description,
     constraints: doc.constraints,
-    examples: doc.examples,
+    examples:
+      doc.source === 'gfg'
+        ? (doc.examples || []).map((ex) => ({
+            ...ex,
+            input: cleanGfgExampleInput(ex.input),
+            output: cleanGfgExpectedOutput(ex.output),
+          }))
+        : doc.examples,
     difficulty: doc.difficulty,
     tags: doc.tags,
     starterCode: doc.starterCode,

@@ -77,22 +77,91 @@ export function cleanGfgExpectedOutput(output) {
     .trim();
 }
 
+function splitTopLevelParts(text) {
+  const parts = [];
+  let current = '';
+  let depth = 0;
+  let quote = '';
+
+  for (const char of String(text || '')) {
+    if (quote) {
+      current += char;
+      if (char === quote) quote = '';
+      continue;
+    }
+
+    if (char === '"' || char === "'") {
+      quote = char;
+      current += char;
+      continue;
+    }
+
+    if (char === '[' || char === '(' || char === '{') depth += 1;
+    if (char === ']' || char === ')' || char === '}') depth = Math.max(0, depth - 1);
+
+    if (char === ',' && depth === 0) {
+      if (current.trim()) parts.push(current.trim());
+      current = '';
+      continue;
+    }
+
+    current += char;
+  }
+
+  if (current.trim()) parts.push(current.trim());
+  return parts;
+}
+
+function stripInputLabel(part) {
+  const idx = part.indexOf('=');
+  if (idx === -1) return part.trim();
+  return part.slice(idx + 1).trim();
+}
+
+function parseLooseJson(value) {
+  const text = simplifyExampleValue(value)
+    .replace(/\bN\b/g, 'null')
+    .replace(/\bNone\b/g, 'null')
+    .replace(/\bTrue\b/g, 'true')
+    .replace(/\bFalse\b/g, 'false')
+    .replace(/'/g, '"');
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+}
+
+function formatParsedInput(value) {
+  const parsed = parseLooseJson(value);
+  if (Array.isArray(parsed)) {
+    if (parsed.every((item) => Array.isArray(item))) {
+      return parsed.map((row) => row.join(' ')).join('\n');
+    }
+    return parsed.join(' ');
+  }
+  return simplifyExampleValue(value);
+}
+
 function simplifyExampleInput(inputText) {
   const raw = decodeHtmlEntities(String(inputText || '')).trim();
   if (!raw) return '';
 
-  const parts = raw.split(/\s*,\s*/);
+  const parts = splitTopLevelParts(raw);
   const rhs = parts
     .map((p) => {
-      const idx = p.indexOf('=');
-      if (idx === -1) return p.trim();
-      return p.slice(idx + 1).trim();
+      return stripInputLabel(p);
     })
-    .map((v) => simplifyExampleValue(v))
+    .map((v) => formatParsedInput(v))
     .filter(Boolean);
 
   if (rhs.length === 0) return raw;
   return rhs.join('\n');
+}
+
+export function cleanGfgExampleInput(input) {
+  return simplifyExampleInput(input);
 }
 
 function parseExamples(problemQuestionHtml) {

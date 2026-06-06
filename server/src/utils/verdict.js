@@ -48,7 +48,12 @@ function parseStructuredOutput(value) {
   const raw = normalizeOutput(value);
   if (!raw) return raw;
 
-  const normalized = raw.replace(/\bN\b/g, 'null').replace(/\bNone\b/g, 'null');
+  const normalized = raw
+    .replace(/\bN\b/g, 'null')
+    .replace(/\bNone\b/g, 'null')
+    .replace(/\bTrue\b/g, 'true')
+    .replace(/\bFalse\b/g, 'false')
+    .replace(/'/g, '"');
   try {
     return JSON.parse(normalized);
   } catch {
@@ -56,11 +61,18 @@ function parseStructuredOutput(value) {
   }
 }
 
+function flattenStructured(value) {
+  if (Array.isArray(value)) {
+    return value.flatMap((item) => flattenStructured(item));
+  }
+  return [value == null ? 'null' : String(value)];
+}
+
 function canonicalize(value) {
   const raw = normalizeOutput(value);
   const structured = parseStructuredOutput(raw);
   if (structured !== null) {
-    return JSON.stringify(structured);
+    return flattenStructured(structured).join(' ');
   }
 
   const lower = raw.toLowerCase();
