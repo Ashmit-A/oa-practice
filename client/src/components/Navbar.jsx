@@ -14,7 +14,7 @@ export default function Navbar() {
     <header className="sticky top-0 z-50 border-b border-stone-800/70 bg-stone-950/70 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-4 py-4 sm:px-6">
         <Link to="/" className="group inline-flex items-center gap-3">
-          <span className="grid h-9 w-9 place-items-center rounded-xl border border-stone-800 bg-gradient-to-br from-brand-600/25 to-brand-900/30 text-sm font-semibold text-brand-100 shadow-sm">
+          <span className="grid h-9 w-9 place-items-center rounded-xl border border-stone-800 bg-linear-to-br from-brand-600/25 to-brand-900/30 text-sm font-semibold text-brand-100 shadow-sm">
             OA
           </span>
           <span className="text-lg font-semibold tracking-tight text-stone-100">
