@@ -8,6 +8,7 @@ import {
 import {
   cleanGfgExampleInput,
   cleanGfgExpectedOutput,
+  cleanGfgText,
   fetchDailyGfgQuestion,
   fetchGfgQuestionById,
   fetchRandomGfgQuestion,
@@ -30,9 +31,9 @@ function externalDocToQuestion(doc) {
   return {
     id: doc.slug,
     titleSlug: doc.slug,
-    title: doc.title,
-    description: doc.description,
-    constraints: doc.constraints,
+    title: doc.source === 'gfg' ? cleanGfgText(doc.title) : doc.title,
+    description: doc.source === 'gfg' ? cleanGfgText(doc.description) : doc.description,
+    constraints: doc.source === 'gfg' ? cleanGfgText(doc.constraints) : doc.constraints,
     examples:
       doc.source === 'gfg'
         ? (doc.examples || []).map((ex) => ({

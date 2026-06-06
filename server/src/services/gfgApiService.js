@@ -49,12 +49,14 @@ function stripHtml(html) {
   const noTags = withSup.replace(/<[^>]*>/g, ' ');
   const decoded = decodeHtmlEntities(noTags);
 
-  return decoded
+  return cleanGfgText(
+    decoded
     .replace(/\r\n/g, '\n')
     .replace(/[ \t]+/g, ' ')
     .replace(/[ \t]*\n[ \t]*/g, '\n')
     .replace(/\n{3,}/g, '\n\n')
-    .trim();
+    .trim()
+  );
 }
 
 function mapDifficulty(raw) {
@@ -73,7 +75,18 @@ function simplifyExampleValue(value) {
 
 export function cleanGfgExpectedOutput(output) {
   return simplifyExampleValue(output)
-    .replace(/\s*(?:Explanation|Your Task|Expected Time Complexity|Expected Auxiliary Space)\s*:.*$/is, '')
+    .replace(/\s*(?:Explanation|Explantion|Explantions|Explanations|Your Task|Expected Time Complexity|Expected Auxiliary Space)\s*:.*$/is, '')
+    .trim();
+}
+
+export function cleanGfgText(text) {
+  return String(text || '')
+    .replace(/\bn\^th\b/gi, 'nth')
+    .replace(/\bn\^([a-z]+)\b/gi, 'n$1')
+    .replace(/(\w)\('/g, "$1 '('")
+    .replace(/n\s*'\)/g, "n ')'")
+    .replace(/\s+([,.;:])/g, '$1')
+    .replace(/[ \t]{2,}/g, ' ')
     .trim();
 }
 
@@ -180,7 +193,7 @@ function parseExamples(problemQuestionHtml) {
   for (const block of preBlocks) {
     const inputMatch = block.match(/Input:\s*([\s\S]*?)\s*Output:/i);
     const outputMatch = block.match(
-      /Output:\s*([\s\S]*?)(?:\n\s*(?:Explanation|Your Task|Expected Time Complexity|Expected Auxiliary Space)\s*:|$)/i
+      /Output:\s*([\s\S]*?)(?:\n\s*(?:Explanation|Explantion|Explantions|Explanations|Your Task|Expected Time Complexity|Expected Auxiliary Space)\s*:|$)/i
     );
     if (!inputMatch || !outputMatch) continue;
 
