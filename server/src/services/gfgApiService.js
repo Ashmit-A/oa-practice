@@ -126,7 +126,12 @@ async function generateGfgParseJson(problemQuestionHtml, model) {
 
 async function parseGfgProblemHtml(problemQuestionHtml) {
   if (!process.env.GEMINI_API_KEY) {
-    throw new AppError('GEMINI_API_KEY is required to parse GeeksforGeeks problems', 500);
+    console.log('GEMINI_API_KEY not set, skipping GeeksforGeeks problem parsing');
+    return {
+      description: '',
+      constraints: '',
+      examples: [],
+    };
   }
 
   try {
@@ -151,7 +156,7 @@ async function parseGfgProblemHtml(problemQuestionHtml) {
         message: fallbackError.message,
       });
       throw new AppError(
-        'High system traffic is preventing GeeksforGeeks parsing right now. Please try again shortly.',
+        'High system traffic is preventing QUESTION parsing. Please try again shortly.',
         503
       );
     }
