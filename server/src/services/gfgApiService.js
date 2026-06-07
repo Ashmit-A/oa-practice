@@ -3,7 +3,9 @@ import axios from 'axios';
 import { AppError } from '../middleware/errorHandler.js';
 import { generateHiddenTestCases } from './aiEvaluationService.js';
 import logger from '../utils/logger.js';
+import Groq from 'groq-sdk';
 
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 const GEMINI_PRIMARY_MODEL = 'gemini-2.5-flash';
@@ -111,6 +113,35 @@ HTML:
 ${problemQuestionHtml}`;
 }
 
+
+async function generateGfgParseWithLlama(problemQuestionHtml) {
+  const systemPrompt = `You are a strict data extraction engine. Analyze the provided GeeksforGeeks HTML problem statement and return a clean JSON object.
+  The output MUST match this schema exactly:
+  {
+    "title": "Problem Title",
+    "description": "Clean Markdown problem description statement without HTML tags",
+    "constraints": ["Constraint line 1", "Constraint line 2"],
+    "examples": [
+      { "input": "Input text here", "output": "Output text here", "explanation": "Explanation here" }
+    ]
+  }`;
+
+  const completion = await groq.chat.completions.create({
+    // Using llama-3.3-70b for incredible structural reasoning capability
+    model: "llama-3.3-70b-versatile", 
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: `Parse this HTML:\n\n${problemQuestionHtml}` }
+    ],
+    // Forces the model engine to output structurally legal JSON code blocks
+    response_format: { type: "json_object" },
+    temperature: 0, 
+  });
+
+  // Extract the raw string message content and return parsed JSON object
+  return JSON.parse(completion.choices[0].message.content);
+}
+
 async function generateGfgParseJson(problemQuestionHtml, model) {
   const response = await ai.models.generateContent({
     model,
@@ -124,9 +155,48 @@ async function generateGfgParseJson(problemQuestionHtml, model) {
   return parseGeminiJson(extractGeminiText(response));
 }
 
+// async function parseGfgProblemHtml(problemQuestionHtml) {
+//   if (!process.env.GEMINI_API_KEY) {
+//     console.log('GEMINI_API_KEY not set, skipping GeeksforGeeks problem parsing');
+//     return {
+//       description: '',
+//       constraints: '',
+//       examples: [],
+//     };
+//   }
+
+//   try {
+//     return normalizeParsedProblem(
+//       await generateGfgParseJson(problemQuestionHtml, GEMINI_PRIMARY_MODEL)
+//     );
+//   } catch (primaryError) {
+//     if (primaryError instanceof AppError) throw primaryError;
+//     logger.warn('gfg_parse_primary_gemini_failed', {
+//       model: GEMINI_PRIMARY_MODEL,
+//       fallbackModel: GEMINI_FALLBACK_MODEL,
+//       message: primaryError.message,
+//     });
+
+//     try {
+//       return normalizeParsedProblem(
+//         await generateGfgParseJson(problemQuestionHtml, GEMINI_FALLBACK_MODEL)
+//       );
+//     } catch (fallbackError) {
+//       logger.warn('gfg_parse_fallback_gemini_failed', {
+//         model: GEMINI_FALLBACK_MODEL,
+//         message: fallbackError.message,
+//       });
+//       throw new AppError(
+//         'High system traffic is preventing Question generation. Please try again shortly.',
+//         503
+//       );
+//     }
+//   }
+// }
 async function parseGfgProblemHtml(problemQuestionHtml) {
-  if (!process.env.GEMINI_API_KEY) {
-    console.log('GEMINI_API_KEY not set, skipping GeeksforGeeks problem parsing');
+  // Graceful skip fallback if neither ecosystem configuration key is declared
+  if (!process.env.GEMINI_API_KEY && !process.env.GROQ_API_KEY) {
+    console.log('Neither GEMINI_API_KEY nor GROQ_API_KEY set, skipping GeeksforGeeks problem parsing');
     return {
       description: '',
       constraints: '',
@@ -134,31 +204,53 @@ async function parseGfgProblemHtml(problemQuestionHtml) {
     };
   }
 
+  // Pipeline Phase 1: Try Primary Google Gemini Instance
   try {
     return normalizeParsedProblem(
       await generateGfgParseJson(problemQuestionHtml, GEMINI_PRIMARY_MODEL)
     );
   } catch (primaryError) {
     if (primaryError instanceof AppError) throw primaryError;
-    logger.warn('gfg_parse_primary_gemini_failed', {
+    
+    logger.warn('gfg_parse_primary_gemini_failed. Trying Fallback Pipeline...', {
       model: GEMINI_PRIMARY_MODEL,
-      fallbackModel: GEMINI_FALLBACK_MODEL,
       message: primaryError.message,
     });
 
+    // Pipeline Phase 2: Try Secondary Google Gemini Instance
     try {
-      return normalizeParsedProblem(
-        await generateGfgParseJson(problemQuestionHtml, GEMINI_FALLBACK_MODEL)
-      );
+      if (process.env.GEMINI_API_KEY) {
+        return normalizeParsedProblem(
+          await generateGfgParseJson(problemQuestionHtml, GEMINI_FALLBACK_MODEL)
+        );
+      } else {
+        throw new Error('Gemini API key unavailable for secondary route');
+      }
     } catch (fallbackError) {
-      logger.warn('gfg_parse_fallback_gemini_failed', {
+      logger.warn('gfg_parse_fallback_gemini_failed. Pivoting entirely to Groq / Llama Core...', {
         model: GEMINI_FALLBACK_MODEL,
         message: fallbackError.message,
       });
-      throw new AppError(
-        'High system traffic is preventing Question generation. Please try again shortly.',
-        503
-      );
+
+      // Pipeline Phase 3: Final Ironclad Fallback Layer via Groq LPUs
+      try {
+        if (!process.env.GROQ_API_KEY) {
+          throw new Error('GROQ_API_KEY is missing from execution runtime settings');
+        }
+
+        const llamaParsedData = await generateGfgParseWithLlama(problemQuestionHtml);
+        return normalizeParsedProblem(llamaParsedData);
+
+      } catch (groqError) {
+        logger.error('gfg_parse_all_available_pipelines_failed', {
+          message: groqError.message,
+        });
+        
+        throw new AppError(
+          'Automated generation networks are currently experiencing abnormally high volume. Please attempt your practice setup again shortly.',
+          503
+        );
+      }
     }
   }
 }
