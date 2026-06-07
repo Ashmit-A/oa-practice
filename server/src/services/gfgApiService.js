@@ -156,7 +156,7 @@ async function parseGfgProblemHtml(problemQuestionHtml) {
         message: fallbackError.message,
       });
       throw new AppError(
-        'High system traffic is preventing QUESTION parsing. Please try again shortly.',
+        'High system traffic is preventing Question generation. Please try again shortly.',
         503
       );
     }
