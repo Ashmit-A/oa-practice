@@ -47,9 +47,11 @@ flowchart TB
 
 1. User submits code via `POST /api/assessment/submit`
 2. Server runs all test cases (sample + hidden) through Judge0
-3. Outputs are compared; verdict is calculated
+3. Outputs are sanitized by `evaluateUserSubmission(userStdout, expectedOutput)` and compared locally with strict equality
 4. Result stored in Submission collection
 5. Client navigates to results page with monitoring summary
+
+GeeksforGeeks HTML parsing uses Gemini with a primary `gemini-2.5-flash` call and a `gemini-1.5-flash-8b` fallback. Correctness checks do not call AI.
 
 ## OA Monitoring (Client-Side)
 

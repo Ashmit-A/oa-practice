@@ -1,6 +1,6 @@
 # OA Practice — Server
 
-Express.js API with MongoDB, Gemini-powered GeeksforGeeks parsing, and Judge0 integration.
+Express.js API with MongoDB, Gemini-powered GeeksforGeeks parsing, strict local output evaluation, and Judge0 integration.
 
 ## Setup
 
@@ -52,7 +52,9 @@ Questions are fetched live from LeetCode and GeeksforGeeks using:
 - [alfa-leetcode-api](https://github.com/alfaarghya/alfa-leetcode-api) for problem lists and daily challenge
 - [leetcode.com/graphql](https://leetcode.com/graphql) for code snippets and test metadata
 - GeeksforGeeks practice APIs for public problem details
-- Google Gemini (`gemini-2.5-flash`) to convert raw GFG HTML into clean descriptions, constraints, examples, STDIN-ready sample cases, generated hidden cases, and internal output adjudication
+- Google Gemini (`gemini-2.5-flash`, with `gemini-1.5-flash-8b` fallback for parsing) to convert raw GFG HTML into clean descriptions, constraints, examples, and STDIN-ready sample cases
+- Local sanitized string equality via `evaluateUserSubmission(userStdout, expectedOutput)` for correctness checks; Windows line endings, per-line margins, and blank lines are normalized before strict comparison
+- Google Gemini may still generate extra hidden GFG cases when `GEMINI_API_KEY` is available
 
 ## Architecture
 

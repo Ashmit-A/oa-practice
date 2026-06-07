@@ -5,9 +5,8 @@ import MonitoringEvent from '../models/MonitoringEvent.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { getQuestionWithAllTestCases } from './questionService.js';
 import { executeCode, runTestCases } from './judge0Service.js';
-import { adjudicateOutput } from './aiEvaluationService.js';
 import { isValidLanguage } from '../utils/languageMap.js';
-import { VERDICTS, normalizeOutput, outputsMatch } from '../utils/verdict.js';
+import { VERDICTS, evaluateUserSubmission } from '../utils/verdict.js';
 import { wrapUserCode } from '../utils/codeRunner.js';
 import env from '../config/env.js';
 
@@ -62,14 +61,6 @@ function prepareExecutableCode(sourceCode, language, question) {
   }
 }
 
-function buildProblemContext(question) {
-  return {
-    title: question.title,
-    description: question.description,
-    constraints: question.constraints,
-  };
-}
-
 export async function runCode({ sessionId, sourceCode, language }) {
   if (!isValidLanguage(language)) {
     throw new AppError('Invalid programming language', 400);
@@ -106,7 +97,6 @@ export async function runCode({ sessionId, sourceCode, language }) {
   }
 
   const executableCode = prepareExecutableCode(sourceCode, language, question);
-  const problemContext = buildProblemContext(question);
   const results = [];
   let consoleOutput = '$ run solution\n';
 
@@ -120,27 +110,14 @@ export async function runCode({ sessionId, sourceCode, language }) {
       memoryLimitKb: question.memoryLimitKb,
     });
 
-    const actual = normalizeOutput(execution.stdout);
-    const expected = normalizeOutput(testCase.expectedOutput);
-    let passed =
-      execution.verdict === VERDICTS.ACCEPTED &&
-      outputsMatch(execution.stdout, testCase.expectedOutput);
-
-    if (!passed && execution.verdict === VERDICTS.ACCEPTED) {
-      const adjudication = await adjudicateOutput({
-        ...problemContext,
-        input: testCase.input,
-        expectedOutput: testCase.expectedOutput,
-        actualOutput: execution.stdout,
-      });
-      passed = adjudication.accepted;
-    }
+    const evaluation = evaluateUserSubmission(execution.stdout, testCase.expectedOutput);
+    const passed = execution.verdict === VERDICTS.ACCEPTED && evaluation.passed;
 
     results.push({
       testCaseIndex: i,
       input: testCase.input,
       expectedOutput: testCase.expectedOutput,
-      actualOutput: actual,
+      actualOutput: evaluation.actual,
       stderr: execution.stderr,
       verdict: passed ? VERDICTS.ACCEPTED : execution.verdict === VERDICTS.ACCEPTED ? VERDICTS.WRONG_ANSWER : execution.verdict,
       passed,
@@ -149,8 +126,8 @@ export async function runCode({ sessionId, sourceCode, language }) {
     });
 
     consoleOutput += `\n[Test ${i + 1}] ${passed ? 'Passed' : results[i].verdict}\n`;
-    if (execution.stdout) consoleOutput += `Output: ${actual}\n`;
-    if (testCase.expectedOutput) consoleOutput += `Expected: ${expected}\n`;
+    if (execution.stdout) consoleOutput += `Output: ${evaluation.actual}\n`;
+    if (testCase.expectedOutput) consoleOutput += `Expected: ${evaluation.expected}\n`;
     if (execution.stderr) consoleOutput += `Error: ${execution.stderr.trim()}\n`;
   }
 
@@ -190,7 +167,6 @@ export async function submitSolution({ sessionId, sourceCode, language }) {
     testCases: question.testCases,
     timeLimitSeconds: question.timeLimitSeconds,
     memoryLimitKb: question.memoryLimitKb,
-    problemContext: buildProblemContext(question),
   });
 
   const score = computeScore({

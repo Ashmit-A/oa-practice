@@ -19,8 +19,8 @@ oa-practice/
 - OA simulation: fullscreen, camera, microphone, tab-switch detection
 - Monaco code editor with Python, JavaScript, Java, and C++
 - Judge0-powered code execution and evaluation
-- Gemini-powered cleanup for GeeksforGeeks problem HTML, examples, and constraints
-- Internal evaluator support for generated hidden tests and ambiguous output adjudication
+- Gemini-powered cleanup for GeeksforGeeks problem HTML, examples, and constraints with a `gemini-2.5-flash` to `gemini-1.5-flash-8b` fallback
+- Strict local output evaluator that ignores line-margin whitespace and blank lines without calling AI
 - Detailed submission results with compliance monitoring summary
 
 ## Prerequisites
@@ -126,7 +126,8 @@ cd server && npm start
 - Multi-monitor detection is browser-limited and labeled as informational only
 - Camera/microphone require user consent; denial is handled gracefully
 - Questions are fetched live from LeetCode; problems with complex types (linked lists, trees) are auto-skipped
-- GeeksforGeeks problem HTML, generated hidden tests, and ambiguous output adjudication use Gemini (`gemini-2.5-flash`); fetching new GFG questions requires `GEMINI_API_KEY`
+- GeeksforGeeks problem HTML parsing uses Gemini (`gemini-2.5-flash`, with `gemini-1.5-flash-8b` fallback); fetching new GFG questions requires `GEMINI_API_KEY`
+- Generated GeeksforGeeks hidden tests may use Gemini when `GEMINI_API_KEY` is available, but user output correctness is evaluated locally with strict sanitized string equality
 - Judge0 CE public API is used by default for code execution (rate limits apply)
 
 ## License

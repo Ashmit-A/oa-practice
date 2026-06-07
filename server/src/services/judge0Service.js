@@ -1,8 +1,7 @@
 import axios from 'axios';
 import env from '../config/env.js';
-import { mapJudge0Status, normalizeOutput, outputsMatch, VERDICTS } from '../utils/verdict.js';
+import { mapJudge0Status, evaluateUserSubmission, VERDICTS } from '../utils/verdict.js';
 import { getLanguageId } from '../utils/languageMap.js';
-import { adjudicateOutput } from './aiEvaluationService.js';
 import logger from '../utils/logger.js';
 
 function getHeaders() {
@@ -111,7 +110,6 @@ export async function runTestCases({
   testCases,
   timeLimitSeconds,
   memoryLimitKb,
-  problemContext,
 }) {
   const results = [];
   let maxRuntime = 0;
@@ -132,19 +130,8 @@ export async function runTestCases({
     maxRuntime = Math.max(maxRuntime, execution.runtimeMs);
     maxMemory = Math.max(maxMemory, execution.memoryKb);
 
-    let passed =
-      execution.verdict === VERDICTS.ACCEPTED &&
-      outputsMatch(execution.stdout, testCase.expectedOutput);
-
-    if (!passed && execution.verdict === VERDICTS.ACCEPTED && problemContext) {
-      const adjudication = await adjudicateOutput({
-        ...problemContext,
-        input: testCase.input,
-        expectedOutput: testCase.expectedOutput,
-        actualOutput: execution.stdout,
-      });
-      passed = adjudication.accepted;
-    }
+    const evaluation = evaluateUserSubmission(execution.stdout, testCase.expectedOutput);
+    const passed = execution.verdict === VERDICTS.ACCEPTED && evaluation.passed;
 
     if (passed) {
       passedCount += 1;
@@ -167,7 +154,7 @@ export async function runTestCases({
       passed,
       input: testCase.isHidden ? undefined : testCase.input,
       expectedOutput: testCase.isHidden ? undefined : testCase.expectedOutput,
-      actualOutput: testCase.isHidden ? undefined : normalizeOutput(execution.stdout),
+      actualOutput: testCase.isHidden ? undefined : evaluation.actual,
       stderr: execution.stderr,
       verdict:
         passed

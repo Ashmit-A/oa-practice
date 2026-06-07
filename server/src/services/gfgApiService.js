@@ -2,14 +2,17 @@ import { GoogleGenAI } from '@google/genai';
 import axios from 'axios';
 import { AppError } from '../middleware/errorHandler.js';
 import { generateHiddenTestCases } from './aiEvaluationService.js';
+import logger from '../utils/logger.js';
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-const GEMINI_MODEL = 'gemini-2.5-flash';
+const GEMINI_PRIMARY_MODEL = 'gemini-2.5-flash';
+const GEMINI_FALLBACK_MODEL = 'gemini-1.5-flash-8b';
 const GFG_PARSER_META = {
   parser: 'gemini',
-  parserVersion: 1,
-  parserModel: GEMINI_MODEL,
+  parserVersion: 2,
+  parserModel: GEMINI_PRIMARY_MODEL,
+  parserFallbackModel: GEMINI_FALLBACK_MODEL,
 };
 
 const practiceApi = axios.create({
@@ -78,15 +81,15 @@ function parseGeminiJson(text) {
 }
 
 function buildGfgParsePrompt(problemQuestionHtml) {
-  return `Parse this GeeksforGeeks problem HTML into a strictly valid JSON object.
+  return `Process this raw GeeksforGeeks problem HTML and return exclusively a strictly valid JSON object.
 
 Return exactly this schema and no extra text:
 {
-  "description": "Clean string of the problem description, preserving standard mathematical expressions or variables (e.g., n^th as nth, or constraints format), dropping everything starting from the Examples section",
+  "description": "Clean string of the problem description, preserving standard mathematical expressions or variables, dropping everything starting from the Examples section",
   "constraints": "Clean string containing only the problem constraints text",
   "examples": [
     {
-      "input": "Cleaned input parameters stripped of variable labels or wrappers, flattened into clean space-separated or newline-separated values appropriate for standard competitive programming STDIN streams",
+      "input": "Cleaned input parameters flattened into clean space-separated or newline-separated values appropriate for standard STDIN streams",
       "output": "Cleaned output string stripped of trailing explanations, typos like 'Explaination:', or administrative task text",
       "explanation": ""
     }
@@ -108,25 +111,50 @@ HTML:
 ${problemQuestionHtml}`;
 }
 
+async function generateGfgParseJson(problemQuestionHtml, model) {
+  const response = await ai.models.generateContent({
+    model,
+    contents: buildGfgParsePrompt(problemQuestionHtml),
+    config: {
+      responseMimeType: 'application/json',
+      temperature: 0,
+    },
+  });
+
+  return parseGeminiJson(extractGeminiText(response));
+}
+
 async function parseGfgProblemHtml(problemQuestionHtml) {
   if (!process.env.GEMINI_API_KEY) {
     throw new AppError('GEMINI_API_KEY is required to parse GeeksforGeeks problems', 500);
   }
 
   try {
-    const response = await ai.models.generateContent({
-      model: GEMINI_MODEL,
-      contents: buildGfgParsePrompt(problemQuestionHtml),
-      config: {
-        responseMimeType: 'application/json',
-        temperature: 0,
-      },
+    return normalizeParsedProblem(
+      await generateGfgParseJson(problemQuestionHtml, GEMINI_PRIMARY_MODEL)
+    );
+  } catch (primaryError) {
+    if (primaryError instanceof AppError) throw primaryError;
+    logger.warn('gfg_parse_primary_gemini_failed', {
+      model: GEMINI_PRIMARY_MODEL,
+      fallbackModel: GEMINI_FALLBACK_MODEL,
+      message: primaryError.message,
     });
 
-    return normalizeParsedProblem(parseGeminiJson(extractGeminiText(response)));
-  } catch (error) {
-    if (error instanceof AppError) throw error;
-    throw new AppError(`Failed to parse GeeksforGeeks problem with Gemini: ${error.message}`, 502);
+    try {
+      return normalizeParsedProblem(
+        await generateGfgParseJson(problemQuestionHtml, GEMINI_FALLBACK_MODEL)
+      );
+    } catch (fallbackError) {
+      logger.warn('gfg_parse_fallback_gemini_failed', {
+        model: GEMINI_FALLBACK_MODEL,
+        message: fallbackError.message,
+      });
+      throw new AppError(
+        'High system traffic is preventing GeeksforGeeks parsing right now. Please try again shortly.',
+        503
+      );
+    }
   }
 }
 

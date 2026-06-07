@@ -44,6 +44,28 @@ export function normalizeOutput(output) {
   return String(output).trim().replace(/\r\n/g, '\n');
 }
 
+function sanitizeForStrictComparison(value) {
+  return String(value ?? '')
+    .replace(/\r\n/g, '\n')
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .join('\n');
+}
+
+export function evaluateUserSubmission(userStdout, expectedOutput) {
+  const actual = sanitizeForStrictComparison(userStdout);
+  const expected = sanitizeForStrictComparison(expectedOutput);
+  const passed = actual === expected;
+
+  return {
+    passed,
+    actual,
+    expected,
+    status: passed ? VERDICTS.ACCEPTED : VERDICTS.WRONG_ANSWER,
+  };
+}
+
 function parseStructuredOutput(value) {
   const raw = normalizeOutput(value);
   if (!raw) return raw;
