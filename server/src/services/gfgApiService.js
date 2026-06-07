@@ -75,7 +75,9 @@ function simplifyExampleValue(value) {
 
 export function cleanGfgExpectedOutput(output) {
   return simplifyExampleValue(output)
-    .replace(/\s*(?:Explanation|Explantion|Explantions|Explanations|Your Task|Expected Time Complexity|Expected Auxiliary Space)\s*:.*$/is, '')
+    // 1. First, strip any trailing block that starts with Explanation (or typos) on a new line or after spaces
+    .replace(/\s*(?:Explanation|Explaination|Explantion|Explantions|Explanations|Your Task|Expected Time Complexity|Expected Auxiliary Space)\s*:[\s\S]*$/i, '')
+    // 2. Clean up any leftover trailing whitespace or newlines
     .trim();
 }
 
