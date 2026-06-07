@@ -17,6 +17,8 @@ services:
         value: https://alfa-leetcode-api.onrender.com
       - key: GEMINI_API_KEY
         sync: false
+      - key: ASSESSMENT_RUN_COOLDOWN_MS
+        value: "8000"
       - key: JUDGE0_API_URL
         value: https://ce.judge0.com
       - key: JUDGE0_USE_WAIT

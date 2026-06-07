@@ -17,6 +17,7 @@ const assessmentSessionSchema = new mongoose.Schema(
     startedAt: { type: Date, default: Date.now },
     durationSeconds: { type: Number, default: 2400 },
     expiresAt: { type: Date },
+    lastRunAt: { type: Date },
     submittedAt: { type: Date },
   },
   { timestamps: true }

@@ -2,6 +2,7 @@ import axios from 'axios';
 import env from '../config/env.js';
 import { mapJudge0Status, normalizeOutput, outputsMatch, VERDICTS } from '../utils/verdict.js';
 import { getLanguageId } from '../utils/languageMap.js';
+import { adjudicateOutput } from './aiEvaluationService.js';
 import logger from '../utils/logger.js';
 
 function getHeaders() {
@@ -104,7 +105,14 @@ export async function executeCode({ sourceCode, language, stdin, timeLimitSecond
   }
 }
 
-export async function runTestCases({ sourceCode, language, testCases, timeLimitSeconds, memoryLimitKb }) {
+export async function runTestCases({
+  sourceCode,
+  language,
+  testCases,
+  timeLimitSeconds,
+  memoryLimitKb,
+  problemContext,
+}) {
   const results = [];
   let maxRuntime = 0;
   let maxMemory = 0;
@@ -124,9 +132,19 @@ export async function runTestCases({ sourceCode, language, testCases, timeLimitS
     maxRuntime = Math.max(maxRuntime, execution.runtimeMs);
     maxMemory = Math.max(maxMemory, execution.memoryKb);
 
-    const passed =
+    let passed =
       execution.verdict === VERDICTS.ACCEPTED &&
       outputsMatch(execution.stdout, testCase.expectedOutput);
+
+    if (!passed && execution.verdict === VERDICTS.ACCEPTED && problemContext) {
+      const adjudication = await adjudicateOutput({
+        ...problemContext,
+        input: testCase.input,
+        expectedOutput: testCase.expectedOutput,
+        actualOutput: execution.stdout,
+      });
+      passed = adjudication.accepted;
+    }
 
     if (passed) {
       passedCount += 1;
@@ -151,7 +169,12 @@ export async function runTestCases({ sourceCode, language, testCases, timeLimitS
       expectedOutput: testCase.isHidden ? undefined : testCase.expectedOutput,
       actualOutput: testCase.isHidden ? undefined : normalizeOutput(execution.stdout),
       stderr: execution.stderr,
-      verdict: passed ? VERDICTS.ACCEPTED : execution.verdict,
+      verdict:
+        passed
+          ? VERDICTS.ACCEPTED
+          : execution.verdict === VERDICTS.ACCEPTED
+            ? VERDICTS.WRONG_ANSWER
+            : execution.verdict,
       isHidden: testCase.isHidden,
     });
 

@@ -24,6 +24,7 @@ const MODE_DURATIONS_SECONDS = {
   daily: 40 * 60,
   contest: 30 * 60,
 };
+const RUN_COOLDOWN_MS = 8000;
 
 const hiddenTags = new Set([
   'mathematics',
@@ -75,6 +76,8 @@ export default function AssessmentPage() {
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [nextRunAt, setNextRunAt] = useState(0);
+  const [runCooldownSeconds, setRunCooldownSeconds] = useState(0);
   const [error, setError] = useState('');
   const [initialized, setInitialized] = useState(false);
   const [modal, setModal] = useState({ open: false, title: '', message: '' });
@@ -249,6 +252,25 @@ export default function AssessmentPage() {
     return () => window.clearInterval(id);
   }, [expiresAt, initialized]);
 
+  useEffect(() => {
+    if (!nextRunAt) {
+      setRunCooldownSeconds(0);
+      return undefined;
+    }
+
+    const tick = () => {
+      const remaining = Math.max(0, Math.ceil((nextRunAt - Date.now()) / 1000));
+      setRunCooldownSeconds(remaining);
+      if (remaining <= 0) {
+        setNextRunAt(0);
+      }
+    };
+
+    tick();
+    const id = window.setInterval(tick, 250);
+    return () => window.clearInterval(id);
+  }, [nextRunAt]);
+
   const handleStartAssessment = async () => {
     const ok = await initializeAssessment();
     setInitialized(true);
@@ -264,6 +286,8 @@ export default function AssessmentPage() {
 
   const handleRun = async () => {
     if (!sessionId) return;
+    if (runCooldownSeconds > 0) return;
+    setNextRunAt(Date.now() + RUN_COOLDOWN_MS);
     setRunning(true);
     setError('');
     try {
@@ -562,10 +586,19 @@ export default function AssessmentPage() {
               <button
                 type="button"
                 onClick={handleRun}
-                disabled={running || submitting || (timeLeftSeconds !== null && timeLeftSeconds <= 0)}
+                disabled={
+                  running ||
+                  submitting ||
+                  runCooldownSeconds > 0 ||
+                  (timeLeftSeconds !== null && timeLeftSeconds <= 0)
+                }
                 className="rounded-lg border border-stone-600 px-4 py-2 text-sm font-medium text-stone-100 hover:bg-stone-900 disabled:opacity-50"
               >
-                {running ? 'Running...' : 'Run'}
+                {running
+                  ? 'Running...'
+                  : runCooldownSeconds > 0
+                    ? `Run (${runCooldownSeconds}s)`
+                    : 'Run'}
               </button>
               <button
                 type="button"

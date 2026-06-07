@@ -15,6 +15,9 @@ const env = {
       ''
     ),
   },
+  assessment: {
+    runCooldownMs: parseInt(process.env.ASSESSMENT_RUN_COOLDOWN_MS || '8000', 10),
+  },
   judge0: {
     apiUrl: judge0Url,
     apiKey: process.env.JUDGE0_API_KEY || '',

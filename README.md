@@ -20,6 +20,7 @@ oa-practice/
 - Monaco code editor with Python, JavaScript, Java, and C++
 - Judge0-powered code execution and evaluation
 - Gemini-powered cleanup for GeeksforGeeks problem HTML, examples, and constraints
+- Internal evaluator support for generated hidden tests and ambiguous output adjudication
 - Detailed submission results with compliance monitoring summary
 
 ## Prerequisites
@@ -69,6 +70,7 @@ Open http://localhost:5173
 | `CLIENT_URL` | Frontend URL for CORS |
 | `LEETCODE_API_URL` | LeetCode proxy API (default: alfa-leetcode-api) |
 | `GEMINI_API_KEY` | Google Gemini API key used by the backend to parse GeeksforGeeks HTML into clean JSON |
+| `ASSESSMENT_RUN_COOLDOWN_MS` | Minimum time between sample runs in the same assessment session (default: `8000`) |
 | `JUDGE0_API_URL` | Judge0 API base URL (default: `https://ce.judge0.com`) |
 | `JUDGE0_API_KEY` | Judge0 auth token (optional for public CE) |
 
@@ -102,7 +104,7 @@ cd server && npm start
 1. Connect repository to Render
 2. Use the included `render.yaml` blueprint, or create a Web Service manually
 3. Set root/build/start commands from `render.yaml`
-4. Configure environment variables (`MONGODB_URI`, `CLIENT_URL`, `GEMINI_API_KEY`, Judge0 settings)
+4. Configure environment variables (`MONGODB_URI`, `CLIENT_URL`, `GEMINI_API_KEY`, `ASSESSMENT_RUN_COOLDOWN_MS`, Judge0 settings)
 
 `GEMINI_API_KEY` belongs only on the Render backend service. Do not add it to Vercel; the frontend only needs `VITE_API_URL`.
 
@@ -124,7 +126,7 @@ cd server && npm start
 - Multi-monitor detection is browser-limited and labeled as informational only
 - Camera/microphone require user consent; denial is handled gracefully
 - Questions are fetched live from LeetCode; problems with complex types (linked lists, trees) are auto-skipped
-- GeeksforGeeks problem HTML is parsed by Gemini (`gemini-2.5-flash`); fetching new GFG questions requires `GEMINI_API_KEY`
+- GeeksforGeeks problem HTML, generated hidden tests, and ambiguous output adjudication use Gemini (`gemini-2.5-flash`); fetching new GFG questions requires `GEMINI_API_KEY`
 - Judge0 CE public API is used by default for code execution (rate limits apply)
 
 ## License

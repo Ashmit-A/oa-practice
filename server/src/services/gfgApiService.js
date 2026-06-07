@@ -1,6 +1,7 @@
 import { GoogleGenAI } from '@google/genai';
 import axios from 'axios';
 import { AppError } from '../middleware/errorHandler.js';
+import { generateHiddenTestCases } from './aiEvaluationService.js';
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
@@ -238,12 +239,19 @@ async function buildQuestionFromGfgProblem(problem) {
   const externalUrl = problem.problem_url || `https://www.geeksforgeeks.org/problems/${slug}/1`;
   const parsed = await parseGfgProblemHtml(problem.problem_question);
 
-  const testCases = parsed.examples.map((ex) => ({
+  const sampleCases = parsed.examples.map((ex) => ({
     input: ex.input,
     expectedOutput: ex.output,
     isSample: true,
     isHidden: false,
   }));
+  const hiddenCases = await generateHiddenTestCases({
+    title: problem.problem_name,
+    description: parsed.description,
+    constraints: parsed.constraints,
+    examples: parsed.examples,
+  });
+  const testCases = [...sampleCases, ...hiddenCases];
 
   return {
     id: questionId,

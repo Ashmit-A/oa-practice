@@ -5,9 +5,11 @@ import MonitoringEvent from '../models/MonitoringEvent.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { getQuestionWithAllTestCases } from './questionService.js';
 import { executeCode, runTestCases } from './judge0Service.js';
+import { adjudicateOutput } from './aiEvaluationService.js';
 import { isValidLanguage } from '../utils/languageMap.js';
 import { VERDICTS, normalizeOutput, outputsMatch } from '../utils/verdict.js';
 import { wrapUserCode } from '../utils/codeRunner.js';
+import env from '../config/env.js';
 
 const MODE_DURATIONS_SECONDS = {
   random: 40 * 60,
@@ -60,6 +62,14 @@ function prepareExecutableCode(sourceCode, language, question) {
   }
 }
 
+function buildProblemContext(question) {
+  return {
+    title: question.title,
+    description: question.description,
+    constraints: question.constraints,
+  };
+}
+
 export async function runCode({ sessionId, sourceCode, language }) {
   if (!isValidLanguage(language)) {
     throw new AppError('Invalid programming language', 400);
@@ -76,6 +86,18 @@ export async function runCode({ sessionId, sourceCode, language }) {
     throw new AppError('Time is up for this assessment session', 403);
   }
 
+  const cooldownMs = Math.max(0, env.assessment.runCooldownMs || 0);
+  if (cooldownMs > 0 && session.lastRunAt) {
+    const elapsedMs = Date.now() - new Date(session.lastRunAt).getTime();
+    if (elapsedMs < cooldownMs) {
+      const waitSeconds = Math.ceil((cooldownMs - elapsedMs) / 1000);
+      throw new AppError(`Please wait ${waitSeconds}s before running again.`, 429);
+    }
+  }
+
+  session.lastRunAt = new Date();
+  await session.save();
+
   const question = await getQuestionWithAllTestCases(session.questionSlug);
   const sampleCases = question.testCases.filter((tc) => tc.isSample);
 
@@ -84,8 +106,9 @@ export async function runCode({ sessionId, sourceCode, language }) {
   }
 
   const executableCode = prepareExecutableCode(sourceCode, language, question);
+  const problemContext = buildProblemContext(question);
   const results = [];
-  let consoleOutput = '';
+  let consoleOutput = '$ run solution\n';
 
   for (let i = 0; i < sampleCases.length; i += 1) {
     const testCase = sampleCases[i];
@@ -99,9 +122,19 @@ export async function runCode({ sessionId, sourceCode, language }) {
 
     const actual = normalizeOutput(execution.stdout);
     const expected = normalizeOutput(testCase.expectedOutput);
-    const passed =
+    let passed =
       execution.verdict === VERDICTS.ACCEPTED &&
       outputsMatch(execution.stdout, testCase.expectedOutput);
+
+    if (!passed && execution.verdict === VERDICTS.ACCEPTED) {
+      const adjudication = await adjudicateOutput({
+        ...problemContext,
+        input: testCase.input,
+        expectedOutput: testCase.expectedOutput,
+        actualOutput: execution.stdout,
+      });
+      passed = adjudication.accepted;
+    }
 
     results.push({
       testCaseIndex: i,
@@ -115,11 +148,10 @@ export async function runCode({ sessionId, sourceCode, language }) {
       memoryKb: execution.memoryKb,
     });
 
-    consoleOutput += `[Test ${i + 1}] ${passed ? 'Passed' : results[i].verdict}\n`;
+    consoleOutput += `\n[Test ${i + 1}] ${passed ? 'Passed' : results[i].verdict}\n`;
     if (execution.stdout) consoleOutput += `Output: ${actual}\n`;
     if (testCase.expectedOutput) consoleOutput += `Expected: ${expected}\n`;
     if (execution.stderr) consoleOutput += `Error: ${execution.stderr.trim()}\n`;
-    consoleOutput += '\n';
   }
 
   return { consoleOutput: consoleOutput.trim(), testResults: results };
@@ -158,6 +190,7 @@ export async function submitSolution({ sessionId, sourceCode, language }) {
     testCases: question.testCases,
     timeLimitSeconds: question.timeLimitSeconds,
     memoryLimitKb: question.memoryLimitKb,
+    problemContext: buildProblemContext(question),
   });
 
   const score = computeScore({
