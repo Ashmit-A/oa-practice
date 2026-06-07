@@ -15,6 +15,8 @@ services:
         sync: false
       - key: LEETCODE_API_URL
         value: https://alfa-leetcode-api.onrender.com
+      - key: GEMINI_API_KEY
+        sync: false
       - key: JUDGE0_API_URL
         value: https://ce.judge0.com
       - key: JUDGE0_USE_WAIT

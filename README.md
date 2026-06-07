@@ -19,13 +19,15 @@ oa-practice/
 - OA simulation: fullscreen, camera, microphone, tab-switch detection
 - Monaco code editor with Python, JavaScript, Java, and C++
 - Judge0-powered code execution and evaluation
+- Gemini-powered cleanup for GeeksforGeeks problem HTML, examples, and constraints
 - Detailed submission results with compliance monitoring summary
 
 ## Prerequisites
 
 - Node.js 18+
 - MongoDB (local or Atlas) — required for assessment sessions and submissions
-- Internet access for LeetCode + Judge0 CE public APIs (no local Judge0 Docker required)
+- Internet access for LeetCode, GeeksforGeeks, Gemini, and Judge0 CE public APIs
+- Google Gemini API key for GeeksforGeeks question parsing
 
 ## Quick Start
 
@@ -66,6 +68,7 @@ Open http://localhost:5173
 | `MONGODB_URI` | MongoDB connection string |
 | `CLIENT_URL` | Frontend URL for CORS |
 | `LEETCODE_API_URL` | LeetCode proxy API (default: alfa-leetcode-api) |
+| `GEMINI_API_KEY` | Google Gemini API key used by the backend to parse GeeksforGeeks HTML into clean JSON |
 | `JUDGE0_API_URL` | Judge0 API base URL (default: `https://ce.judge0.com`) |
 | `JUDGE0_API_KEY` | Judge0 auth token (optional for public CE) |
 
@@ -99,7 +102,9 @@ cd server && npm start
 1. Connect repository to Render
 2. Use the included `render.yaml` blueprint, or create a Web Service manually
 3. Set root/build/start commands from `render.yaml`
-4. Configure environment variables (MongoDB Atlas URI, Judge0 URL, CLIENT_URL)
+4. Configure environment variables (`MONGODB_URI`, `CLIENT_URL`, `GEMINI_API_KEY`, Judge0 settings)
+
+`GEMINI_API_KEY` belongs only on the Render backend service. Do not add it to Vercel; the frontend only needs `VITE_API_URL`.
 
 ## API Endpoints
 
@@ -119,6 +124,7 @@ cd server && npm start
 - Multi-monitor detection is browser-limited and labeled as informational only
 - Camera/microphone require user consent; denial is handled gracefully
 - Questions are fetched live from LeetCode; problems with complex types (linked lists, trees) are auto-skipped
+- GeeksforGeeks problem HTML is parsed by Gemini (`gemini-2.5-flash`); fetching new GFG questions requires `GEMINI_API_KEY`
 - Judge0 CE public API is used by default for code execution (rate limits apply)
 
 ## License

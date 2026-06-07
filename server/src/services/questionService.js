@@ -6,9 +6,6 @@ import {
   fetchRandomQuestion,
 } from './leetcodeApiService.js';
 import {
-  cleanGfgExampleInput,
-  cleanGfgExpectedOutput,
-  cleanGfgText,
   fetchDailyGfgQuestion,
   fetchGfgQuestionById,
   fetchRandomGfgQuestion,
@@ -18,12 +15,13 @@ function isGfgId(id) {
   return String(id || '').startsWith('gfg_');
 }
 
+function isFreshGfgParserDoc(doc) {
+  return doc?.source === 'gfg' && doc?.metaData?.parser === 'gemini';
+}
+
 function externalDocToQuestion(doc) {
   const normalizedTestCases = (doc.testCases || []).map((tc) => ({
     ...tc,
-    input: doc.source === 'gfg' ? cleanGfgExampleInput(tc.input) : tc.input,
-    expectedOutput:
-      doc.source === 'gfg' ? cleanGfgExpectedOutput(tc.expectedOutput) : tc.expectedOutput,
     isSample: doc.source === 'gfg' ? true : Boolean(tc.isSample),
     isHidden: doc.source === 'gfg' ? false : Boolean(tc.isHidden),
   }));
@@ -31,17 +29,10 @@ function externalDocToQuestion(doc) {
   return {
     id: doc.slug,
     titleSlug: doc.slug,
-    title: doc.source === 'gfg' ? cleanGfgText(doc.title) : doc.title,
-    description: doc.source === 'gfg' ? cleanGfgText(doc.description) : doc.description,
-    constraints: doc.source === 'gfg' ? cleanGfgText(doc.constraints) : doc.constraints,
-    examples:
-      doc.source === 'gfg'
-        ? (doc.examples || []).map((ex) => ({
-            ...ex,
-            input: cleanGfgExampleInput(ex.input),
-            output: cleanGfgExpectedOutput(ex.output),
-          }))
-        : doc.examples,
+    title: doc.title,
+    description: doc.description,
+    constraints: doc.constraints,
+    examples: doc.examples,
     difficulty: doc.difficulty,
     tags: doc.tags,
     starterCode: doc.starterCode,
@@ -133,7 +124,7 @@ export async function getDailyQuestion() {
 export async function getQuestionById(id) {
   if (isGfgId(id)) {
     const existing = await ExternalQuestion.findOne({ slug: id }).lean();
-    if (existing) return formatQuestion(externalDocToQuestion(existing));
+    if (isFreshGfgParserDoc(existing)) return formatQuestion(externalDocToQuestion(existing));
     const fetched = await fetchGfgQuestionById(id);
     const saved = await upsertExternalQuestion(fetched);
     return formatQuestion(saved);
@@ -146,7 +137,7 @@ export async function getQuestionById(id) {
 export async function getQuestionWithAllTestCases(id) {
   if (isGfgId(id)) {
     const existing = await ExternalQuestion.findOne({ slug: id }).lean();
-    const question = existing
+    const question = isFreshGfgParserDoc(existing)
       ? externalDocToQuestion(existing)
       : await upsertExternalQuestion(await fetchGfgQuestionById(id));
 
