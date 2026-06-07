@@ -20,11 +20,16 @@ function isFreshGfgParserDoc(doc) {
 }
 
 function externalDocToQuestion(doc) {
-  const normalizedTestCases = (doc.testCases || []).map((tc) => ({
-    ...tc,
-    isSample: doc.source === 'gfg' ? true : Boolean(tc.isSample),
-    isHidden: doc.source === 'gfg' ? false : Boolean(tc.isHidden),
-  }));
+  const normalizedTestCases = (doc.testCases || []).map((tc) => {
+    const isHidden = Boolean(tc.isHidden);
+    const isSample = isHidden ? false : tc.isSample == null ? true : Boolean(tc.isSample);
+
+    return {
+      ...tc,
+      isSample,
+      isHidden,
+    };
+  });
 
   return {
     id: doc.slug,
@@ -49,10 +54,14 @@ function externalDocToQuestion(doc) {
 }
 
 async function upsertExternalQuestion(question) {
-  const normalizedTestCases = (question.testCases || []).map((tc) => ({
-    ...tc,
-    isHidden: Boolean(tc.isHidden),
-  }));
+  const normalizedTestCases = (question.testCases || []).map((tc) => {
+    const isHidden = Boolean(tc.isHidden);
+    return {
+      ...tc,
+      isSample: isHidden ? false : tc.isSample == null ? true : Boolean(tc.isSample),
+      isHidden,
+    };
+  });
 
   const payload = {
     slug: question.id,

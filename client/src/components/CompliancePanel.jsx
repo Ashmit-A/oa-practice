@@ -11,8 +11,8 @@ export default function CompliancePanel({ compliance }) {
   } = compliance;
 
   return (
-    <aside className="rounded-2xl border border-stone-800 bg-stone-950/40 p-4">
-      <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-stone-300">
+    <aside className="rounded-lg border border-zinc-800 bg-zinc-950/60 p-4">
+      <h2 className="mb-4 text-sm font-semibold uppercase text-zinc-300">
         Compliance
       </h2>
 
@@ -33,14 +33,14 @@ export default function CompliancePanel({ compliance }) {
           inactiveLabel={displayDetection}
         />
 
-        <div className="rounded-lg border border-stone-800 bg-stone-950/60 p-3">
-          <p className="text-xs text-stone-400">Tab Switches</p>
-          <p className="text-2xl font-bold text-amber-400">{tabSwitchCount}</p>
+        <div className="rounded-lg border border-zinc-800 bg-zinc-950/70 p-3">
+          <p className="text-xs text-zinc-400">Tab Switches</p>
+          <p className="text-2xl font-semibold text-amber-400">{tabSwitchCount}</p>
         </div>
       </div>
 
       {displayDetection && (
-        <p className="mt-3 text-xs text-stone-500">
+        <p className="mt-3 text-xs leading-5 text-zinc-500">
           Multi-monitor detection is informational only and may be inaccurate due to browser
           security limitations.
         </p>

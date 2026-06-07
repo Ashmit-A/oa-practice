@@ -32,17 +32,20 @@ export default function RandomQuestionPage() {
   };
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+    <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:py-10">
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-zinc-800 pb-5">
         <div>
-          <h1 className="text-3xl font-bold text-stone-100">Random Question</h1>
-          <p className="mt-1 text-stone-400">A randomly selected coding problem for practice.</p>
+          <p className="text-sm font-semibold uppercase text-brand-500">Practice mode</p>
+          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-zinc-100">
+            Random Question
+          </h1>
+          <p className="mt-2 text-zinc-400">A fresh coding problem with a full assessment flow.</p>
         </div>
         <button
           type="button"
           onClick={fetchQuestion}
           disabled={loading}
-          className="rounded-lg border border-stone-700 px-4 py-2 text-sm font-medium text-stone-200 hover:bg-stone-800 disabled:opacity-50"
+          className="rounded-lg border border-zinc-700 bg-zinc-900/40 px-4 py-2 text-sm font-medium text-zinc-200 hover:bg-zinc-800 disabled:opacity-50"
         >
           New Random
         </button>
@@ -50,7 +53,7 @@ export default function RandomQuestionPage() {
 
       {loading && <Loader message="Fetching question..." />}
       {error && (
-        <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-rose-200">
+        <div className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-4 text-rose-200">
           {error}
         </div>
       )}

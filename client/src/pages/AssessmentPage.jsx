@@ -422,11 +422,11 @@ export default function AssessmentPage() {
     <div className="mx-auto max-w-[1680px] px-3 py-3 sm:px-4">
       <div
         ref={layoutRef}
-        className="flex min-h-screen overflow-hidden rounded-2xl border border-stone-800 bg-stone-950/40"
+        style={{ '--sidebar-width': `${sidebarWidth}px` }}
+        className="flex min-h-screen flex-col overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950/75 lg:flex-row"
       >
         <aside
-          className="flex shrink-0 flex-col border-r border-stone-800 bg-stone-950/70"
-          style={{ width: sidebarWidth }}
+          className="flex w-full shrink-0 flex-col border-b border-zinc-800 bg-zinc-950/90 lg:w-[var(--sidebar-width)] lg:border-b-0 lg:border-r"
         >
           <div className="border-b border-stone-800 px-4 py-4">
             <div className="flex items-start justify-between gap-3">
@@ -521,16 +521,16 @@ export default function AssessmentPage() {
 
         <div
           id="oa-sidebar-divider"
-          className="w-1 shrink-0 cursor-col-resize bg-stone-800 hover:bg-stone-700"
+          className="hidden w-1 shrink-0 cursor-col-resize bg-zinc-800 hover:bg-zinc-700 lg:block"
         />
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-stone-800 bg-stone-950/70 px-4 py-3">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-800 bg-zinc-950/90 px-4 py-3">
             <div className="flex flex-wrap items-center gap-2">
               <select
                 value={language}
                 onChange={(e) => setLanguage(e.target.value)}
-                className="rounded-lg border border-stone-700 bg-stone-950 px-3 py-2 text-sm text-stone-100"
+                className="rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100"
               >
                 {LANGUAGES.map((lang) => (
                   <option key={lang.value} value={lang.value}>
@@ -539,14 +539,14 @@ export default function AssessmentPage() {
                 ))}
               </select>
               {mode === 'contest' && contest?.questionIds?.length > 0 && (
-                <div className="flex items-center gap-1 rounded-lg border border-stone-800 bg-stone-900/40 p-1">
+                <div className="flex items-center gap-1 rounded-lg border border-zinc-800 bg-zinc-900/40 p-1">
                   {contest.questionIds.map((id, idx) => {
                     const active = id === questionId;
                     const done = Boolean(contest?.submissions?.[id]);
                     const base =
                       active
                         ? 'bg-brand-600/20 text-brand-100'
-                        : 'text-stone-200 hover:bg-stone-800';
+                        : 'text-zinc-200 hover:bg-zinc-800';
                     return (
                       <button
                         key={id}
@@ -569,20 +569,20 @@ export default function AssessmentPage() {
               <button
                 type="button"
                 onClick={() => setDrawer('compliance')}
-                className="rounded-lg border border-stone-700 px-3 py-2 text-sm font-medium text-stone-200 hover:bg-stone-900"
+                className="rounded-lg border border-zinc-700 px-3 py-2 text-sm font-medium text-zinc-200 hover:bg-zinc-900"
               >
                 Compliance
               </button>
               <button
                 type="button"
                 onClick={() => setDrawer('video')}
-                className="rounded-lg border border-stone-700 px-3 py-2 text-sm font-medium text-stone-200 hover:bg-stone-900"
+                className="rounded-lg border border-zinc-700 px-3 py-2 text-sm font-medium text-zinc-200 hover:bg-zinc-900"
               >
                 Video
               </button>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex w-full gap-2 sm:w-auto">
               <button
                 type="button"
                 onClick={handleRun}
@@ -592,7 +592,7 @@ export default function AssessmentPage() {
                   runCooldownSeconds > 0 ||
                   (timeLeftSeconds !== null && timeLeftSeconds <= 0)
                 }
-                className="rounded-lg border border-stone-600 px-4 py-2 text-sm font-medium text-stone-100 hover:bg-stone-900 disabled:opacity-50"
+                className="flex-1 rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-100 hover:bg-zinc-900 disabled:opacity-50 sm:flex-none"
               >
                 {running
                   ? 'Running...'
@@ -609,7 +609,7 @@ export default function AssessmentPage() {
                   contestSubmitted ||
                   (timeLeftSeconds !== null && timeLeftSeconds <= 0)
                 }
-                className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50"
+                className="flex-1 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50 sm:flex-none"
               >
                 {contestSubmitted ? 'Submitted' : submitting ? 'Submitting...' : 'Submit'}
               </button>
@@ -617,9 +617,9 @@ export default function AssessmentPage() {
           </div>
 
           <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-auto p-4">
-            <div className="rounded-2xl border border-stone-800 bg-stone-900/30 p-4">
-              <div className="mb-3 rounded-xl border border-stone-800 bg-stone-950/40 p-3 text-sm text-stone-300">
-                <span className="font-semibold text-stone-200">How to submit: </span>
+            <div className="rounded-lg border border-zinc-800 bg-zinc-900/30 p-3 sm:p-4">
+              <div className="mb-3 rounded-lg border border-zinc-800 bg-zinc-950/60 p-3 text-sm text-zinc-300">
+                <span className="font-semibold text-zinc-100">How to submit: </span>
                 {submissionHint}
               </div>
               <CodeEditor
@@ -631,23 +631,23 @@ export default function AssessmentPage() {
             </div>
 
             <div className="grid gap-4 lg:grid-cols-2">
-              <div className="rounded-2xl border border-stone-800 bg-stone-900/30 p-4">
-                <h3 className="mb-3 text-sm font-semibold text-stone-100">Console Output</h3>
-                <pre className="min-h-[160px] overflow-auto rounded-xl bg-black/30 p-4 text-xs text-stone-200">
+              <div className="rounded-lg border border-zinc-800 bg-zinc-900/30 p-4">
+                <h3 className="mb-3 text-sm font-semibold text-zinc-100">Console Output</h3>
+                <pre className="min-h-[160px] overflow-auto rounded-md bg-black/30 p-4 text-xs leading-5 text-zinc-200">
                   {consoleOutput || 'Run your code to see output...'}
                 </pre>
               </div>
 
-              <div className="rounded-2xl border border-stone-800 bg-stone-900/30 p-4">
-                <h3 className="mb-3 text-sm font-semibold text-stone-100">Test Results</h3>
+              <div className="rounded-lg border border-zinc-800 bg-zinc-900/30 p-4">
+                <h3 className="mb-3 text-sm font-semibold text-zinc-100">Test Results</h3>
                 {testResults.length === 0 ? (
-                  <p className="text-sm text-stone-500">No results yet.</p>
+                  <p className="text-sm text-zinc-500">No results yet.</p>
                 ) : (
                   <div className="space-y-3">
                     {testResults.map((result, idx) => (
                       <div
                         key={idx}
-                        className={`rounded-xl border p-3 text-sm ${
+                        className={`rounded-lg border p-3 text-sm ${
                           result.passed
                             ? 'border-emerald-500/30 bg-emerald-500/10'
                             : 'border-rose-500/30 bg-rose-500/10'
@@ -704,10 +704,10 @@ export default function AssessmentPage() {
 function ResultBlock({ label, value }) {
   return (
     <div>
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-stone-500">
+      <p className="text-[11px] font-semibold uppercase text-zinc-500">
         {label}
       </p>
-      <pre className="mt-1 min-h-10 overflow-auto whitespace-pre-wrap rounded-lg bg-black/30 p-2 text-xs text-stone-200">
+      <pre className="mt-1 min-h-10 overflow-auto whitespace-pre-wrap rounded-md bg-black/30 p-2 text-xs leading-5 text-zinc-200">
         {value ?? ''}
       </pre>
     </div>

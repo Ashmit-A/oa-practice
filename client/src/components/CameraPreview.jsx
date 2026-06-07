@@ -29,14 +29,14 @@ export default function CameraPreview() {
 
   return (
     <div className="space-y-3">
-      <div className="rounded-xl border border-slate-800 bg-slate-900/70 p-3">
-        <p className="text-xs font-semibold text-slate-300">Camera Preview</p>
-        <p className="mt-1 text-xs text-slate-500">
+      <div className="rounded-lg border border-zinc-800 bg-zinc-900/70 p-3">
+        <p className="text-xs font-semibold text-zinc-300">Camera Preview</p>
+        <p className="mt-1 text-xs text-zinc-500">
           This preview is local only and is not recorded or uploaded.
         </p>
       </div>
       {error ? (
-        <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-sm text-rose-300">
+        <div className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-sm text-rose-300">
           {error}
         </div>
       ) : (
@@ -45,10 +45,9 @@ export default function CameraPreview() {
           autoPlay
           playsInline
           muted
-          className="aspect-video w-full rounded-xl border border-slate-800 bg-black object-cover"
+          className="aspect-video w-full rounded-lg border border-zinc-800 bg-black object-cover"
         />
       )}
     </div>
   );
 }
-

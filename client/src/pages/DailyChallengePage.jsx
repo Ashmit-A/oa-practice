@@ -32,16 +32,20 @@ export default function DailyChallengePage() {
   });
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
-      <div className="mb-6">
-        <p className="text-sm font-medium text-brand-500">{today}</p>
-        <h1 className="text-3xl font-bold text-stone-100">Daily Contest</h1>
-        <p className="mt-1 text-stone-400">Race the clock for points — faster accepted runs score higher.</p>
+    <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:py-10">
+      <div className="mb-6 border-b border-zinc-800 pb-5">
+        <p className="text-sm font-semibold uppercase text-brand-500">{today}</p>
+        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-zinc-100">
+          Daily Contest
+        </h1>
+        <p className="mt-2 text-zinc-400">
+          Race the clock for points; faster accepted runs score higher.
+        </p>
       </div>
 
       {loading && <Loader message="Loading daily challenge..." />}
       {error && (
-        <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-rose-200">
+        <div className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-4 text-rose-200">
           {error}
         </div>
       )}

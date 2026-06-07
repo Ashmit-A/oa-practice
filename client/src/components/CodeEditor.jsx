@@ -9,7 +9,7 @@ const languageMap = {
 
 export default function CodeEditor({ value, onChange, language = 'python', height = '400px' }) {
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-700">
+    <div className="overflow-hidden rounded-lg border border-zinc-700 bg-black">
       <Editor
         height={height}
         language={languageMap[language] || 'python'}

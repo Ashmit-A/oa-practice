@@ -63,26 +63,41 @@ export default function ContestPage() {
   };
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 px-4 py-10 sm:px-6">
-      <div>
-        <h1 className="text-3xl font-bold text-stone-100">Contest Mode</h1>
-        <p className="mt-2 text-stone-400">
+    <div className="mx-auto max-w-5xl space-y-6 px-4 py-8 sm:px-6 lg:py-10">
+      <div className="border-b border-zinc-800 pb-5">
+        <p className="text-sm font-semibold uppercase text-brand-500">Assessment flow</p>
+        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-zinc-100">Contest Mode</h1>
+        <p className="mt-2 text-zinc-400">
           3 consecutive questions. 30 minutes per question (90 minutes total).
         </p>
       </div>
 
-      <div className="rounded-2xl border border-stone-800 bg-stone-950/40 p-6">
-        <h2 className="text-lg font-semibold text-stone-100">Rules</h2>
-        <ul className="mt-3 space-y-1 text-sm text-stone-300">
-          <li>Fullscreen + tab-switch monitoring is enabled once you start.</li>
-          <li>Free movement between questions at any time.</li>
-          <li>Verdicts are revealed only after the full contest is submitted.</li>
-          <li>After finishing, you can open the original source statement for each problem.</li>
+      <div className="grid gap-4 md:grid-cols-4">
+        {[
+          ['3', 'Questions'],
+          ['30m', 'Each question'],
+          ['Locked', 'Verdicts'],
+          ['Live', 'Monitoring'],
+        ].map(([value, label]) => (
+          <div key={label} className="rounded-lg border border-zinc-800 bg-zinc-900/35 p-4">
+            <p className="text-2xl font-semibold text-zinc-100">{value}</p>
+            <p className="mt-1 text-sm text-zinc-500">{label}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="rounded-lg border border-zinc-800 bg-zinc-950/70 p-6">
+        <h2 className="text-lg font-semibold text-zinc-100">Rules</h2>
+        <ul className="mt-3 grid gap-2 text-sm text-zinc-300 sm:grid-cols-2">
+          <li className="rounded-md bg-zinc-900/45 p-3">Fullscreen and tab-switch monitoring begin once you start.</li>
+          <li className="rounded-md bg-zinc-900/45 p-3">Move between questions while the contest is active.</li>
+          <li className="rounded-md bg-zinc-900/45 p-3">Verdicts unlock after all contest questions are submitted.</li>
+          <li className="rounded-md bg-zinc-900/45 p-3">Original source statements remain available after finishing.</li>
         </ul>
       </div>
 
       {error && (
-        <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-rose-200">
+        <div className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-4 text-rose-200">
           {error}
         </div>
       )}
@@ -94,7 +109,7 @@ export default function ContestPage() {
           type="button"
           onClick={startContest}
           disabled={loading}
-          className="rounded-xl bg-brand-600 px-6 py-3 font-semibold text-white hover:bg-brand-700 disabled:opacity-50"
+          className="rounded-lg bg-brand-600 px-6 py-3 font-semibold text-white shadow-lg shadow-brand-950/30 hover:bg-brand-700 disabled:opacity-50"
         >
           Start Contest
         </button>
@@ -105,7 +120,7 @@ export default function ContestPage() {
               type="button"
               onClick={resumeContest}
               disabled={loading}
-              className="rounded-xl border border-stone-700 bg-stone-900/50 px-6 py-3 font-semibold text-stone-100 hover:bg-stone-800 disabled:opacity-50"
+              className="rounded-lg border border-zinc-700 bg-zinc-900/50 px-6 py-3 font-semibold text-zinc-100 hover:bg-zinc-800 disabled:opacity-50"
             >
               Resume
             </button>
@@ -113,7 +128,7 @@ export default function ContestPage() {
               type="button"
               onClick={clearContest}
               disabled={loading}
-              className="rounded-xl border border-stone-700 px-6 py-3 font-semibold text-stone-200 hover:bg-stone-900 disabled:opacity-50"
+              className="rounded-lg border border-zinc-700 px-6 py-3 font-semibold text-zinc-200 hover:bg-zinc-900 disabled:opacity-50"
             >
               Reset
             </button>
